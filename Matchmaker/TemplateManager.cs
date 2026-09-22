@@ -6,7 +6,6 @@ using System.Linq;  // allows for queries
 using System.Text;
 using System.Text.RegularExpressions;
 using UglyToad.PdfPig;
-//using UglyToad.PdfPig.DocumentLayoutAnalysis;
 
 namespace Matchmaker
 {
@@ -171,21 +170,32 @@ namespace Matchmaker
             
             foreach (var entry in form2Entries) {
 
-                // Form 2
-                ws2.Cell(writingRow, 2).Value = "Material";                                                                         // Type will always be material for these items
-                ws2.Cell(writingRow, 3).Value = entry.DesignPn != null ? "FN " + entry.FindNumber + "-" + entry.AsBuiltMpn : "";    // material or process name
-                ws2.Cell(writingRow, 4).Value = entry.Specification ?? "";                                                          // spec num
-                ws2.Cell(writingRow, 5).Value = "N/A";                                                                              // code N/A always
-                ws2.Cell(writingRow, 6).Value = entry.Supplier ?? "";                                                               // supplier
-                ws2.Cell(writingRow, 7).Value = "N/A";                                                                              // customer approval verification n/a always
-                ws2.Cell(writingRow, 8).Value = FindCofCNumber(ws2);                                                                // CofC           
+                ws2.Cell(writingRow, 2).Value = "Material";
+                ws2.Cell(writingRow, 3).Value = entry.DesignPn != null ? $"FN {entry.FindNumber}-{entry.AsBuiltMpn}" : "";
+                ws2.Cell(writingRow, 4).Value = entry.Specification ?? "";
+                ws2.Cell(writingRow, 5).Value = "N/A";
+                ws2.Cell(writingRow, 6).Value = entry.Supplier ?? "";
+                ws2.Cell(writingRow, 7).Value = "N/A";
+                ws2.Cell(writingRow, 8).Value = "{LT Num}{Lot Code}{Exp Date}";  // <-- use FA data, manual entry for now
 
-                // Form 2 continued
-                // where/in what drawing do I find this number
+                // Optional: write Lot Code(s) on the "Form 2 - Cont." sheet, if there’s a column for it.
+                if (ws3 != null && !string.IsNullOrWhiteSpace(entry.LotCode))
+                {
+                    // Find the right columns based on your template headings
+                    // Example:
+                    var contHeader = ws3.Search("Lot Code").FirstOrDefault() ?? ws3.Search("Lot").FirstOrDefault();
+                    if (contHeader != null)
+                    {
+                        int lotCol = contHeader.Address.ColumnNumber;
+                        ws3.Cell(writingRow, lotCol).Value = entry.LotCode;
+                    }
+                }
+
                 writingRow++;
+
             }
 
-            
+
         }
 
         private string? FindCofCNumber(IXLWorksheet ws) {

@@ -16,5 +16,7 @@ namespace Matchmaker
         public CBomLoader CreateCBomLoader()
             => new CBomLoader();
 
+        public FAReportLoader CreateFAReportLoader()
+            => new FAReportLoader();
     }
 }

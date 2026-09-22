@@ -17,5 +17,11 @@ namespace Matchmaker
         public string? Supplier { get; set; }
         public string? Rir { get; set; }
         public string? Specification { get; set; }
+
+
+        // From FA Report for form 2
+        public string? CofCNumber { get; set; }
+        public string? LotCode { get; set; }
+
     }
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using System.Text;
+﻿using System.Text.RegularExpressions;
 
 namespace Matchmaker
 {
@@ -22,6 +19,7 @@ namespace Matchmaker
             var inovarBomLoader = loaderFactory.CreateInovarBomLoader();
             var asBuiltLoader = loaderFactory.CreateAsBuiltLoader();
             var cBomLoader = loaderFactory.CreateCBomLoader();
+            var faLoader = loaderFactory.CreateFAReportLoader();
 
             // create concrete sevices
             var normalizerService = serviceFactory.CreateNormalizerService();
@@ -33,6 +31,7 @@ namespace Matchmaker
             var asBuilt = asBuiltLoader.Load(asBuiltPath);
             var eBom = cBomLoader.LoadEBom(cBomPath);
             var mpnAlternates = cBomLoader.LoadMpnAlternates(cBomPath);
+            var faEntries = faLoader.Load(faReportPath);
 
             // Merge alternates into eBom
             foreach (var entry in eBom) {
@@ -46,6 +45,29 @@ namespace Matchmaker
                 }
             }
 
+
+            // Build an index for FA entries (normalized keys)
+            var ns = normalizerService;
+
+            // Index by (MPN+Supplier)
+            var faByMpnSupplier = faEntries
+                .Where(f => !string.IsNullOrWhiteSpace(f.ManufacturerMpn) && !string.IsNullOrWhiteSpace(f.Supplier))
+                .GroupBy(f => ns.NormalizeMpn(f.ManufacturerMpn) + "|" + ns.NormalizeSupplier(f.Supplier))
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // Index by Spec
+            var faBySpec = faEntries
+                .Where(f => !string.IsNullOrWhiteSpace(f.Specification))
+                .GroupBy(f => ns.NormalizeSpec(f.Specification))
+                .ToDictionary(g => g.Key, g => g.First());
+
+            // Index by MPN only
+            var faByMpnOnly = faEntries
+                .Where(f => !string.IsNullOrWhiteSpace(f.ManufacturerMpn))
+                .GroupBy(f => ns.NormalizeMpn(f.ManufacturerMpn))
+                .ToDictionary(g => g.Key, g => g.First());
+
+
             // cycle through BOM to join and match
             var results = new List<MatchResult>();
             foreach (var part in inovarBom) {
@@ -56,13 +78,55 @@ namespace Matchmaker
 
                 var match = matcherService.EvaluateMatch(rec);
                 results.Add(match);
+
+                // NEW: enrich with FA data if Form 2 candidate
+                if (IsForm2Candidate(match))
+                {
+                    var asBuiltMpnNorm = ns.NormalizeMpn(match.AsBuiltMpn ?? "");
+                    var supplierNorm = ns.NormalizeSupplier(match.Supplier ?? "");
+                    var specNorm = ns.NormalizeSpec(match.Specification ?? "");
+
+                    FAReportEntry? fa = null;
+
+                    // Priority order
+                    if (!string.IsNullOrEmpty(asBuiltMpnNorm) && !string.IsNullOrEmpty(supplierNorm))
+                    {
+                        faByMpnSupplier.TryGetValue(asBuiltMpnNorm + "|" + supplierNorm, out fa);
+                    }
+                    if (fa is null && !string.IsNullOrEmpty(specNorm))
+                    {
+                        faBySpec.TryGetValue(specNorm, out fa);
+                    }
+                    if (fa is null && !string.IsNullOrEmpty(asBuiltMpnNorm))
+                    {
+                        faByMpnOnly.TryGetValue(asBuiltMpnNorm, out fa);
+                    }
+
+                    if (fa is not null)
+                    {
+                        //match.CofCNumber = fa.CofCNumber;
+                        match.LotCode = fa.LotCode;
+                    }
+                }
+
+                results.Add(match);
             }
 
             return results;
         }
 
 
-        private FindNumberRecord? CreateFindNumberRecord(InovarBomEntry inovarBom, List<AsBuiltEntry> asBuilt, List<EBomEntry> eBom) {
+
+
+    private static bool IsForm2Candidate(MatchResult r)
+    {
+        // Mirror your TemplateManager logic:
+        return (r.LtNumber?.StartsWith("LT437") == true && !(r.DesignPn?.StartsWith("H") == true))
+            || r.LtNumber?.StartsWith("710") == true
+            || r.LtNumber?.StartsWith("001") == true;
+    }
+
+    private FindNumberRecord? CreateFindNumberRecord(InovarBomEntry inovarBom, List<AsBuiltEntry> asBuilt, List<EBomEntry> eBom) {
             
             // match using normalized LT part number
             NormalizerService ns = new NormalizerService();

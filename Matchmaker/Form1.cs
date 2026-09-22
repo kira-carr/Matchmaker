@@ -1,9 +1,4 @@
-using System;
-using System.Windows.Forms;
-using ClosedXML.Excel;
 using System.Drawing.Drawing2D;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 
 
@@ -180,7 +175,62 @@ namespace Matchmaker
                 case "FAReport": btnDeleteFAReport.Visible = true; break;
             }
             UpdateResetButtonState();
+
+
+            //  Optional: Prompt to preview raw text dump for FA Report
+            //if (key == "FAReport")
+            //{
+            //    var answer = MessageBox.Show(
+            //        "Preview raw text extracted from the FA Report now?",
+            //        "FA Report Preview",
+            //        MessageBoxButtons.YesNo,
+            //        MessageBoxIcon.Question);
+
+            //    if (answer == DialogResult.Yes)
+            //    {
+            //        _ = PreviewFaRawTextAsync();   // see method below
+            //    }
+            //}
+
         }
+
+
+        private async Task PreviewFaRawTextAsync()
+        {
+            if (string.IsNullOrWhiteSpace(faReportFilePath))
+            {
+                MessageBox.Show("No FA Report selected.");
+                return;
+            }
+
+            try
+            {
+                // Run the dump off the UI thread
+                string rawPath = await Task.Run(() => PdfDebug.DumpRawText(faReportFilePath, inputDocsDir));
+
+                // Let Kira see the file and optionally open it in Notepad
+                var open = MessageBox.Show($"Raw PDF text saved:\n{rawPath}\n\nOpen in Notepad?",
+                                           "FA Report Raw Text",
+                                           MessageBoxButtons.YesNo,
+                                           MessageBoxIcon.Information);
+
+                if (open == DialogResult.Yes)
+                {
+                    // Start Notepad with the file
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "notepad.exe",
+                        Arguments = $"\"{rawPath}\"",
+                        UseShellExecute = false
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error dumping raw PDF text:\n" + ex.Message);
+            }
+        }
+
 
         private void Form1_Load(object sender, EventArgs e)
         {
