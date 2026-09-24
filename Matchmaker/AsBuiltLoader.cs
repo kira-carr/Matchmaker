@@ -5,10 +5,32 @@ internal class AsBuiltLoader : IExcelLoader<AsBuiltEntry>
 {
     private static int RequireColumn(IXLWorksheet ws, string header)
     {
-        var cell = ws.Search(header).FirstOrDefault();
-        if (cell == null)
-            throw new ApplicationException($"Required column '{header}' was not found in the worksheet.");
-        return cell.Address.ColumnNumber;
+
+        var headerRow = ws.Row(1);
+
+        // Scan header row only
+        var headerLookup =
+            headerRow.Cells()
+                     .Where(c => !string.IsNullOrWhiteSpace(c.GetValue<string>()))
+                     .ToDictionary(
+                         cell => cell.GetValue<string>().Trim(),
+                         cell => cell.Address.ColumnNumber,
+                         StringComparer.OrdinalIgnoreCase);
+
+        if (!headerLookup.TryGetValue(header, out int col))
+        {
+            MessageBox.Show(
+                $"Required column '{header}' was not found in the uploaded As-Built file.\n\n" +
+                $"Please make sure you selected the correct As-Built export.",
+                "Invalid As-Built File",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            throw new ApplicationException($"Required column '{header}' was not found.");
+        }
+
+        return col;
+
     }
 
     public List<AsBuiltEntry> Load(string filePath)

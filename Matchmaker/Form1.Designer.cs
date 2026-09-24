@@ -326,9 +326,9 @@
             lblInstructions.Location = new Point(234, 131);
             lblInstructions.MaximumSize = new Size(500, 0);
             lblInstructions.Name = "lblInstructions";
-            lblInstructions.Size = new Size(460, 50);
+            lblInstructions.Size = new Size(475, 50);
             lblInstructions.TabIndex = 20;
-            lblInstructions.Text = "Upload Excel files to populate Net Inspect FAIR forms. Always verify results before submitting. ";
+            lblInstructions.Text = "Upload files to populate Net Inspect FAIR forms. Always verify results before submitting. ";
             lblInstructions.TextAlign = ContentAlignment.TopCenter;
             // 
             // divider

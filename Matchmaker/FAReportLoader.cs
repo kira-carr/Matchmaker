@@ -1,27 +1,43 @@
 ﻿using Matchmaker;
 using System.Text.RegularExpressions;
 using UglyToad.PdfPig;
-using UglyToad.PdfPig.Content;
 
 internal class FAReportLoader
 {
+
+
+    private bool IsValidFAReport(string text)
+    {
+        // Strong required signature markers:
+        bool hasHeader = text.Contains("First Article Inspection Report for", StringComparison.OrdinalIgnoreCase);
+
+        return hasHeader;
+    }
+
     public List<FAReportEntry> Load(string pdfPath)
     {
         var entries = new List<FAReportEntry>();
-
         var processPattern = new Regex(@"First Article Inspection Report for\s+(?<proc>[^\r\n]+)", RegexOptions.IgnoreCase);
         var woPattern = new Regex(@"\bWO\s*:\s*(?<wo>\S+)", RegexOptions.IgnoreCase);
         var snPattern = new Regex(@"\bSerial\s+Number\s*:\s*(?<sn>[^\r\n]+)", RegexOptions.IgnoreCase);
 
         var lotPromptPattern = new Regex(
-            @"Record\s+(?:theto)?\s*lot\s+code\s+of\s+(?:the\s+)?(?<material>pastechip\s+bonderepoxyunderfill)\b[^\r\n]*\r?\n\s*(?<code>(?:N/?An/?a[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12[A-Za-z0-9\-]{6,}))",
-            RegexOptions.IgnoreCase);
+    @"Record\s+(?:the\s+|to\s+)?lot\s+code\s+of\s+(?:the\s+)?(?<material>paste|chip\s+bonder|epoxy|underfill)\b.*?(?<code>(?:N/?A)|[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12})",
+    RegexOptions.IgnoreCase | RegexOptions.Singleline);
 
         using var pdf = PdfDocument.Open(pdfPath);
+        bool anyValidPages = false;
+
+
 
         foreach (var page in pdf.GetPages())
         {
             string pageText = page.Text;
+            // Validate this page as an FA Report
+            if (!IsValidFAReport(pageText))
+                continue;   // skip pages that aren't FA Report pages
+
+            anyValidPages = true;
 
             // Page context
             string process = MatchOrEmpty(processPattern, pageText, "proc");
@@ -45,6 +61,19 @@ internal class FAReportLoader
                 });
             }
         }
+
+        if (!anyValidPages)
+        {
+            MessageBox.Show(
+                "The PDF you selected does not appear to be a First Article Report.\n\n" +
+                "Please make sure you uploaded the correct FA Report PDF.",
+                "Invalid PDF",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            throw new ApplicationException("PDF is not a valid First Article Report.");
+        }
+
 
         return entries;
     }

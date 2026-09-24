@@ -1,9 +1,4 @@
-﻿//using DocumentFormat.OpenXml.ExtendedProperties;
-//using System;
-//using System.Collections.Generic;
-//using System.Text;
-
-namespace Matchmaker
+﻿namespace Matchmaker
 {
     internal class MatcherService
     {

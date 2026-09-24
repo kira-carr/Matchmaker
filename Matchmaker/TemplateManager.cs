@@ -1,11 +1,4 @@
 ﻿using ClosedXML.Excel;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;  // allows for queries
-using System.Text;
-using System.Text.RegularExpressions;
-using UglyToad.PdfPig;
 
 namespace Matchmaker
 {
@@ -96,7 +89,7 @@ namespace Matchmaker
         }
 
 
-        public void SaveModifiedTemplate(XLWorkbook wb)
+        public bool SaveModifiedTemplate(XLWorkbook wb)
         {
             SaveFileDialog dlg = new SaveFileDialog
             {
@@ -105,16 +98,18 @@ namespace Matchmaker
                 FileName = "MatchmakerOutput.xlsx"
             };
 
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() != DialogResult.OK|| string.IsNullOrWhiteSpace(dlg.FileName))
+                return false;   // user canceled or no path
+
+            try
             {
-                try
-                {
-                    wb.SaveAs(dlg.FileName);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error saving file:\n" + ex.Message);
-                }
+                wb.SaveAs(dlg.FileName);
+                return true;    // success
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving file:\n" + ex.Message,"Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
         }
 

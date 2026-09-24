@@ -351,7 +351,6 @@ namespace Matchmaker
             // update UI to show click being processed
             btnGo.Enabled = false;
             lblStatus.Text = "Loading ...";
-
             progressBar1.Visible = true;
             progressBar1.Style = ProgressBarStyle.Marquee;
             progressBar1.MarqueeAnimationSpeed = 30;
@@ -360,63 +359,150 @@ namespace Matchmaker
             try
             {
 
-                // Confirm files uploaded 
+                // Confirm all files uploaded 
                 if (string.IsNullOrWhiteSpace(inovarBOMFilePath) ||
                     string.IsNullOrWhiteSpace(cBomFilePath) ||
                     string.IsNullOrWhiteSpace(asBuiltFilePath) ||
                     string.IsNullOrWhiteSpace(faReportFilePath))
                 {
-                    MessageBox.Show("Please upload Inovar BOM, CBOM, As Built, and FA Report files before continuing.");
-                    throw new Exception("Missing input file(s).");
+                    MessageBox.Show("Please upload Inovar BOM, CBOM, As Built, and FA Report files before continuing.", "Missing input file(s)", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
 
                 // run engine
                 var results = await Task.Run(() =>
                 {
-                    var loaderFactory = new LoaderFactory();
-                    var serviceFactory = new ServiceFactory();
 
-                    var engine = new MatchmakerEngine(loaderFactory, serviceFactory);
                     try
                     {
-                        return engine.Process(inovarBOMFilePath, asBuiltFilePath, cBomFilePath, faReportFilePath);
+                        var loaderFactory = new LoaderFactory();
+                        var serviceFactory = new ServiceFactory();
+                        var engine = new MatchmakerEngine(loaderFactory, serviceFactory);
+
+                        var results = engine.Process(inovarBOMFilePath, asBuiltFilePath, cBomFilePath, faReportFilePath);
+                        return (success: true, error: (string?)null, results: results);
                     }
                     catch (ApplicationException ex)
                     {
-                        MessageBox.Show(ex.Message, "File Access Error", MessageBoxButtons.OK);
-                        return new List<MatchResult>(); // returns empty list
+                        // Known, controllable failures (e.g., "PDF is not a valid First Article Report.",
+                        // "The uploaded BOM file is missing required columns.", etc.)
+                        return (success: false, error: ex.Message, results: new List<MatchResult>());
                     }
-
+                    catch (Exception ex)
+                    {
+                        // Unexpected faults
+                        return (success: false, error: "Unexpected error: " + ex.Message, results: new List<MatchResult>());
+                    }
                 });
 
+                // If processing failed, notify and let the user fix inputs. Do NOT save.
+                if (!results.success)
+                {
+                    MessageBox.Show(results.error ?? "Processing failed.",
+                                    "Processing Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+
+                    var invalidKey = GetInvalidKeyFromMessage(results.error);
+                    if (!string.IsNullOrEmpty(invalidKey))
+                    {
+                        ClearInvalidByKey(invalidKey);
+                    }
+
+
+                    return; // stay on the screen; user re-uploads
+                }
+
+                // Guard: if results are empty, do not save
+                if (results.results == null || results.results.Count == 0)
+                {
+                    MessageBox.Show("No results to save. One or more uploaded files may be invalid.",
+                                    "Nothing to save", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                // Save only on success
                 TemplateManager tm = new TemplateManager();
-
                 var template = tm.LoadTemplate(templatePath);
-                tm.PopulateTemplate(template, results); //write results to template
-                tm.SaveModifiedTemplate(template);      // save updated template
+                tm.PopulateTemplate(template, results.results);
 
-            }
+                bool saved = tm.SaveModifiedTemplate(template);  // your bool-returning method
+                if (!saved)
+                {
+                    // User canceled the Save dialog or saving failed
+                    MessageBox.Show("Save canceled. No file was written.", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
 
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading Excel files:\n" + ex.Message + "\n\nFor persistent issues, contact kira.carr@spartronics.com");
-                return;
+                MessageBox.Show("File saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             finally
             {
-                // reset UI after fail
+                // UI reset only
                 lblStatus.Text = "";
                 progressBar1.Style = ProgressBarStyle.Continuous;
                 progressBar1.MarqueeAnimationSpeed = 0;
                 progressBar1.Visible = false;
 
-                MessageBox.Show("File saved successfully.");
                 btnGo.Enabled = true;
             }
-
-            lblStatus.Text = "";
-            btnGo.Enabled = true;
         }
+
+
+
+        private string? GetInvalidKeyFromMessage(string? message)
+        {
+            if (string.IsNullOrWhiteSpace(message)) return null;
+
+            // Check more specific phrases first
+            if (message.IndexOf("FA Report", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "FAReport";
+
+            if (message.IndexOf("CBOM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                message.IndexOf("C BOM", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "CBOM";
+
+            if (message.IndexOf("As Built", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "asBuilt";
+
+            if (message.IndexOf("Inovar BOM", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                message.IndexOf("BOM", StringComparison.OrdinalIgnoreCase) >= 0)
+                return "inovarBOM";
+
+            return null; // couldn't determine
+        }
+
+        private void ClearInvalidByKey(string key)
+        {
+            if (fileClearers.TryGetValue(key, out var clear))
+                clear();
+
+            switch (key)
+            {
+                case "inovarBOM":
+                    lblInovarBOM.ForeColor = Color.DarkRed;
+                    lblInovarBOM.Text = "invalid BOM upload";
+                    btnDeleteInovarBOM.Visible = true;
+                    break;
+                case "CBOM":
+                    lblCBOM.ForeColor = Color.DarkRed;
+                    lblCBOM.Text = "invalid CBOM upload";
+                    btnDeleteCBOM.Visible = true;
+                    break;
+                case "asBuilt":
+                    lblAsBuilt.ForeColor = Color.DarkRed;
+                    lblAsBuilt.Text = "invalid As Built upload";
+                    btnDeleteAsBuilt.Visible = true;
+                    break;
+                case "FAReport":
+                    lblFAReport.ForeColor = Color.DarkRed;
+                    lblFAReport.Text = "invalid FA Report upload";
+                    btnDeleteFAReport.Visible = true;
+                    break;
+            }
+
+            UpdateResetButtonState();
+        }
+
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
