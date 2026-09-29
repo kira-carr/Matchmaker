@@ -148,6 +148,8 @@
             lblTitle.TabIndex = 10;
             lblTitle.Text = "NET INSPECT MATCHMAKER 2.0";
             lblTitle.TextAlign = ContentAlignment.MiddleCenter;
+            lblTitle.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
             // 
             // btnGo
             // 
@@ -164,6 +166,8 @@
             btnGo.Text = "Start";
             btnGo.UseVisualStyleBackColor = false;
             btnGo.Click += btnGo_Click;
+            btnGo.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+
             // 
             // btnDeleteInovarBOM
             // 
@@ -231,6 +235,7 @@
             progressBar1.Size = new Size(125, 16);
             progressBar1.TabIndex = 18;
             progressBar1.Visible = false;
+            progressBar1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             // 
             // submissionPanel
             // 
@@ -256,6 +261,8 @@
             submissionPanel.Size = new Size(437, 326);
             submissionPanel.TabIndex = 19;
             submissionPanel.Paint += submissionPanel_Paint;
+            submissionPanel.Anchor = AnchorStyles.Top;
+            submissionPanel.Anchor = AnchorStyles.Top;
             // 
             // btnDeleteFAReport
             // 
@@ -338,6 +345,8 @@
             divider.Name = "divider";
             divider.Size = new Size(600, 1);
             divider.TabIndex = 1;
+            divider.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
             // 
             // Form1
             // 
