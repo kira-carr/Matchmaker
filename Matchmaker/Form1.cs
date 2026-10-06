@@ -38,18 +38,21 @@ namespace Matchmaker
 
             fileSetters = new Dictionary<string, Action<string>>
             {
-                ["inovarBOM"] = path => 
-                    { inovarBOMFilePath = path; 
+                ["inovarBOM"] = path =>
+                    {
+                        inovarBOMFilePath = path;
                         lblInovarBOM.Text = Path.GetFileName(path);
                         lblInovarBOM.ForeColor = SystemColors.HotTrack;
                     },
-                ["CBOM"] = path => 
-                    { cBomFilePath = path; 
+                ["CBOM"] = path =>
+                    {
+                        cBomFilePath = path;
                         lblCBOM.Text = Path.GetFileName(path);
                         lblCBOM.ForeColor = SystemColors.HotTrack;
                     },
-                ["asBuilt"] = path => 
-                    { asBuiltFilePath = path;
+                ["asBuilt"] = path =>
+                    {
+                        asBuiltFilePath = path;
                         lblAsBuilt.Text = Path.GetFileName(path);
                         lblAsBuilt.ForeColor = SystemColors.HotTrack;
                     },
@@ -63,23 +66,27 @@ namespace Matchmaker
 
             fileClearers = new Dictionary<string, Action>
             {
-                ["inovarBOM"] = () => 
-                    { inovarBOMFilePath = ""; 
+                ["inovarBOM"] = () =>
+                    {
+                        inovarBOMFilePath = "";
                         lblInovarBOM.Text = "(no file selected)";
                         lblInovarBOM.ForeColor = SystemColors.GrayText;
-                        btnDeleteInovarBOM.Visible = false; 
+                        btnDeleteInovarBOM.Visible = false;
                     },
-                ["CBOM"] = () => 
-                    { cBomFilePath = ""; 
+                ["CBOM"] = () =>
+                    {
+                        cBomFilePath = "";
                         lblCBOM.Text = "(no file selected)";
                         lblCBOM.ForeColor = SystemColors.GrayText;
                         btnDeleteCBOM.Visible = false;
                     },
-                ["asBuilt"] = () => 
-                    { asBuiltFilePath = ""; 
+                ["asBuilt"] = () =>
+                    {
+                        asBuiltFilePath = "";
                         lblAsBuilt.Text = "(no file selected)";
                         lblAsBuilt.ForeColor = SystemColors.GrayText;
-                        btnDeleteAsBuilt.Visible = false; },
+                        btnDeleteAsBuilt.Visible = false;
+                    },
                 ["FAReport"] = () =>
                 {
                     faReportFilePath = "";
@@ -91,11 +98,13 @@ namespace Matchmaker
 
         }
 
-        private string PickPdf() {
+        private string PickPdf()
+        {
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.Filter = "PDF Files|*.pdf";
 
-            if (dialog.ShowDialog() == DialogResult.OK) { 
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
                 return dialog.FileName;
             }
             return "";
@@ -130,11 +139,13 @@ namespace Matchmaker
             {    // if processing pdf
                 filePath = PickPdf();
             }
-            else { // otherwise excel
+            else
+            { // otherwise excel
                 filePath = PickExcel();
             }
 
-            if (!string.IsNullOrEmpty(filePath)) {
+            if (!string.IsNullOrEmpty(filePath))
+            {
 
                 HandleFileSelection(key, filePath);
             }
@@ -152,7 +163,8 @@ namespace Matchmaker
                                 MessageBoxIcon.Warning);
                 return;
             }
-            else if  (key != "FAReport" && !filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) && !filePath.EndsWith(".xls", StringComparison.OrdinalIgnoreCase)) {
+            else if (key != "FAReport" && !filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) && !filePath.EndsWith(".xls", StringComparison.OrdinalIgnoreCase))
+            {
                 MessageBox.Show("Upload must be an Excel file.",
                                 "Invalid File Type",
                                 MessageBoxButtons.OK,
@@ -161,7 +173,8 @@ namespace Matchmaker
             }
 
             // get file
-            if (fileSetters.TryGetValue(key, out var setFile)) {
+            if (fileSetters.TryGetValue(key, out var setFile))
+            {
                 setFile(filePath);
             }
 
@@ -195,41 +208,41 @@ namespace Matchmaker
         }
 
 
-        private async Task PreviewFaRawTextAsync()
-        {
-            if (string.IsNullOrWhiteSpace(faReportFilePath))
-            {
-                MessageBox.Show("No FA Report selected.");
-                return;
-            }
+        //private async Task PreviewFaRawTextAsync()
+        //{
+        //    if (string.IsNullOrWhiteSpace(faReportFilePath))
+        //    {
+        //        MessageBox.Show("No FA Report selected.");
+        //        return;
+        //    }
 
-            try
-            {
-                // Run the dump off the UI thread
-                string rawPath = await Task.Run(() => PdfDebug.DumpRawText(faReportFilePath, inputDocsDir));
+        //    try
+        //    {
+        //        // Run the dump off the UI thread
+        //        string rawPath = await Task.Run(() => PdfDebug.DumpRawText(faReportFilePath, inputDocsDir));
 
-                // Let Kira see the file and optionally open it in Notepad
-                var open = MessageBox.Show($"Raw PDF text saved:\n{rawPath}\n\nOpen in Notepad?",
-                                           "FA Report Raw Text",
-                                           MessageBoxButtons.YesNo,
-                                           MessageBoxIcon.Information);
+        //        // Let Kira see the file and optionally open it in Notepad
+        //        var open = MessageBox.Show($"Raw PDF text saved:\n{rawPath}\n\nOpen in Notepad?",
+        //                                   "FA Report Raw Text",
+        //                                   MessageBoxButtons.YesNo,
+        //                                   MessageBoxIcon.Information);
 
-                if (open == DialogResult.Yes)
-                {
-                    // Start Notepad with the file
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = "notepad.exe",
-                        Arguments = $"\"{rawPath}\"",
-                        UseShellExecute = false
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error dumping raw PDF text:\n" + ex.Message);
-            }
-        }
+        //        if (open == DialogResult.Yes)
+        //        {
+        //            // Start Notepad with the file
+        //            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+        //            {
+        //                FileName = "notepad.exe",
+        //                Arguments = $"\"{rawPath}\"",
+        //                UseShellExecute = false
+        //            });
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show("Error dumping raw PDF text:\n" + ex.Message);
+        //    }
+        //}
 
 
         private void Form1_Load(object sender, EventArgs e)
@@ -286,7 +299,8 @@ namespace Matchmaker
             return name != null ? asm.GetManifestResourceStream(name) : null;
         }
 
-        private void UpdateResetButtonState() {
+        private void UpdateResetButtonState()
+        {
             btnReset.Enabled =  // once a file is uploaded, enable reset button
                 !string.IsNullOrEmpty(inovarBOMFilePath) || !string.IsNullOrEmpty(cBomFilePath) || !string.IsNullOrEmpty(asBuiltFilePath) || !string.IsNullOrEmpty(faReportFilePath);
         }
@@ -318,7 +332,8 @@ namespace Matchmaker
         {
             ResetUploadButtonColors();   // clear everything first
 
-            if (sender is not Button btn) {
+            if (sender is not Button btn)
+            {
                 return;
             }
 
@@ -365,6 +380,7 @@ namespace Matchmaker
                     string.IsNullOrWhiteSpace(asBuiltFilePath) ||
                     string.IsNullOrWhiteSpace(faReportFilePath))
                 {
+                    StopSpinner();
                     MessageBox.Show("Please upload Inovar BOM, CBOM, As Built, and FA Report files before continuing.", "Missing input file(s)", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -398,6 +414,7 @@ namespace Matchmaker
                 // If processing failed, notify and let the user fix inputs. Do NOT save.
                 if (!results.success)
                 {
+                    StopSpinner();
                     MessageBox.Show(results.error ?? "Processing failed.",
                                     "Processing Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
@@ -408,13 +425,13 @@ namespace Matchmaker
                         ClearInvalidByKey(invalidKey);
                     }
 
-
                     return; // stay on the screen; user re-uploads
                 }
 
                 // Guard: if results are empty, do not save
                 if (results.results == null || results.results.Count == 0)
                 {
+                    StopSpinner();
                     MessageBox.Show("No results to save. One or more uploaded files may be invalid.",
                                     "Nothing to save", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
@@ -429,20 +446,17 @@ namespace Matchmaker
                 if (!saved)
                 {
                     // User canceled the Save dialog or saving failed
+                    StopSpinner();
                     MessageBox.Show("Save canceled. No file was written.", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
 
+                StopSpinner();
                 MessageBox.Show("File saved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             finally
             {
                 // UI reset only
-                lblStatus.Text = "";
-                progressBar1.Style = ProgressBarStyle.Continuous;
-                progressBar1.MarqueeAnimationSpeed = 0;
-                progressBar1.Visible = false;
-
                 btnGo.Enabled = true;
             }
         }
@@ -454,18 +468,16 @@ namespace Matchmaker
             if (string.IsNullOrWhiteSpace(message)) return null;
 
             // Check more specific phrases first
-            if (message.IndexOf("FA Report", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (message.IndexOf("FA Report file", StringComparison.OrdinalIgnoreCase) >= 0)
                 return "FAReport";
 
-            if (message.IndexOf("CBOM", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                message.IndexOf("C BOM", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (message.IndexOf("CBOM file", StringComparison.OrdinalIgnoreCase) >= 0)
                 return "CBOM";
 
-            if (message.IndexOf("As Built", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (message.IndexOf("As Built file", StringComparison.OrdinalIgnoreCase) >= 0)
                 return "asBuilt";
 
-            if (message.IndexOf("Inovar BOM", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                message.IndexOf("BOM", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (message.IndexOf("Inovar BOM file", StringComparison.OrdinalIgnoreCase) >= 0) 
                 return "inovarBOM";
 
             return null; // couldn't determine
@@ -538,8 +550,14 @@ namespace Matchmaker
             UpdateResetButtonState();
         }
 
+        private void StopSpinner()
+        {
+            lblStatus.Text = "";
+            progressBar1.Style = ProgressBarStyle.Continuous;
+            progressBar1.MarqueeAnimationSpeed = 0;
+            progressBar1.Visible = false;
+
+
+        }
     }
-
-
-
 }

@@ -64,14 +64,14 @@ internal class FAReportLoader
 
         if (!anyValidPages)
         {
-            MessageBox.Show(
-                "The PDF you selected does not appear to be a First Article Report.\n\n" +
-                "Please make sure you uploaded the correct FA Report PDF.",
-                "Invalid PDF",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+            //MessageBox.Show(
+            //    "The PDF you selected does not appear to be a First Article Report.\n\n" +
+            //    "Please make sure you uploaded the correct FA Report PDF.",
+            //    "Invalid PDF",
+            //    MessageBoxButtons.OK,
+            //    MessageBoxIcon.Error);
 
-            throw new ApplicationException("PDF is not a valid First Article Report.");
+            throw new ApplicationException("PDF is not a valid FA Report file.");
         }
 
 

@@ -43,15 +43,15 @@ namespace Matchmaker
 
                     if (missing.Any())
                     {
-                        var msg =
-                            "Your CBOM is missing required columns:\n\n" +
-                            string.Join("\n", missing) +
-                            "\n\nPlease verify that you uploaded the correct CBOM file.";
+                        //var msg =
+                        //    "Your CBOM is missing required columns:\n\n" +
+                        //    string.Join("\n", missing) +
+                        //    "\n\nPlease verify that you uploaded the correct CBOM file.";
 
-                        MessageBox.Show(msg, "Invalid CBOM File", MessageBoxButtons.OK,
-                                        MessageBoxIcon.Error);
+                        //MessageBox.Show(msg, "Invalid CBOM File", MessageBoxButtons.OK,
+                        //                MessageBoxIcon.Error);
 
-                        throw new ApplicationException("CBOM missing required columns.");
+                        throw new ApplicationException("CBOM file missing required columns.");
                     }
 
                     // Dynamically map column indices

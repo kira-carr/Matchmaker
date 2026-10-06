@@ -45,14 +45,14 @@ namespace Matchmaker
 
                     if (missing.Any())
                     {
-                        string message =
-                            "Your Inovar BOM is missing required columns:\n\n" +
-                            string.Join("\n", missing) +
-                            "\n\nPlease make sure you uploaded the correct BOM file.";
+                        //string message =
+                        //    "Your Inovar BOM is missing required columns:\n\n" +
+                        //    string.Join("\n", missing) +
+                        //    "\n\nPlease make sure you uploaded the correct BOM file.";
 
-                        MessageBox.Show(message, "Invalid BOM File", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        //MessageBox.Show(message, "Invalid BOM File", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                        throw new ApplicationException("The uploaded BOM file is missing required columns.");
+                        throw new ApplicationException("The uploaded Inovar BOM file is missing required columns.");
                     }
 
                     // Dynamic column lookup

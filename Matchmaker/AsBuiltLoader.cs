@@ -19,14 +19,14 @@ internal class AsBuiltLoader : IExcelLoader<AsBuiltEntry>
 
         if (!headerLookup.TryGetValue(header, out int col))
         {
-            MessageBox.Show(
-                $"Required column '{header}' was not found in the uploaded As-Built file.\n\n" +
-                $"Please make sure you selected the correct As-Built export.",
-                "Invalid As-Built File",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+            //MessageBox.Show(
+            //    $"Required column '{header}' was not found in the uploaded As-Built file.\n\n" +
+            //    $"Please make sure you selected the correct As-Built export.",
+            //    "Invalid As-Built File",
+            //    MessageBoxButtons.OK,
+            //    MessageBoxIcon.Error);
 
-            throw new ApplicationException($"Required column '{header}' was not found.");
+            throw new ApplicationException($"Required column '{header}' was not found in As Built file.");
         }
 
         return col;
